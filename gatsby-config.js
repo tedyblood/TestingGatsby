@@ -39,13 +39,13 @@ module.exports = {
         perPage: 100,
         concurrentRequests: 10,
         includedRoutes: [
-          //"**/categories",
+          "**/categories",
           "**/posts",
           "**/pages",
           "**/media",
           //"**/tags",
           //"**/taxonomies",
-          //"**/users",          
+          "**/users",          
           "**/*/*/menus",
           "**/*/*/portfolio"
         ],

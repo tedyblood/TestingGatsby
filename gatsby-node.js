@@ -74,46 +74,7 @@ exports.createPages = ({ graphql, actions }) => {
           })
         })
       })
-      // ==== END PAGES ====
-
-      // ==== POSTS (WORDPRESS NATIVE AND ACF) ====
-      .then(() => {
-        graphql(
-          `
-            {
-              allWordpressPost {
-                edges{
-                  node{
-                    id
-                    title
-                    slug
-                    excerpt
-                    content
-                  }
-                }
-              }
-            }
-          `
-        ).then(result => {
-          if (result.errors) {
-            console.log(result.errors)
-            reject(result.errors)
-          }
-          const postTemplate = path.resolve("./src/templates/post.js")
-          // We want to create a detailed page for each
-          // post node. We'll just use the WordPress Slug for the slug.
-          // The Post ID is prefixed with 'POST_'
-          _.each(result.data.allWordpressPost.edges, edge => {
-            createPage({
-              path: `/post/${edge.node.slug}/`,
-              component: slash(postTemplate),
-              context: edge.node,
-            })
-          })
-          resolve()
-        })
-      })
-    // ==== END POSTS ====
+      // ==== END PAGES ====     
     // ==== PORTFOLIO ====
     .then(() => {
       graphql(
@@ -151,9 +112,64 @@ exports.createPages = ({ graphql, actions }) => {
             context: edge.node,
           })
         })
-        resolve()
+        //resolve()
       })
     })
   // ==== END PORTFOLIO ====
+  // === POOST ===
+    .then(() => {
+      graphql(`
+      {
+        allWordpressPost{
+          edges{
+            node {
+              autorName
+              slug
+              title
+              excerpt
+              content
+              date(formatString: " Do MMM YYYY HH:mm")
+              featured_media {
+                source_url
+              }
+            }
+          }
+        }
+      }
+      `).then(result => {
+        if(result.errors){
+          console.log(result.errors)
+          reject(result.errors)
+        }
+
+        const posts = result.data.allWordpressPost.edges
+        const postPerPage = 5
+        const numberOfPages = Math.ceil(posts.length / postPerPage)
+        const blogPostListTemplate = path.resolve('./src/templates/blogPostList.js')
+
+        Array.from({length: numberOfPages}).forEach((page, index) => {
+          createPage({
+            component: slash(blogPostListTemplate),
+            path: index === 0 ? '/blog/' : `/blog/${index + 1}`,
+            context: {
+            posts: posts.slice(index * postPerPage, (index * postPerPage + postPerPage)),
+            numberOfPages,
+            currentPage: index + 1
+            }
+          })
+        })
+        // Create Page pages.
+        const pageTemplate = path.resolve("./src/templates/singlePost.js");
+        _.each(posts, (post) => {
+          createPage({
+            path:`/post/${post.node.slug}`,
+            component: slash(pageTemplate),
+            context: post.node
+          })
+        })
+        resolve()
+      })
+    })
+  //=== END POST ===
   })
 }
